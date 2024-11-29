@@ -1,0 +1,40 @@
+{
+  "resourceType": "GMProject",
+  "resourceVersion": "1.7",
+  "name": "MiniTween",
+  "AudioGroups": [
+    {"resourceType":"GMAudioGroup","resourceVersion":"1.3","name":"audiogroup_default","targets":-1,},
+  ],
+  "configs": {
+    "children": [],
+    "name": "Default",
+  },
+  "defaultScriptType": 0,
+  "Folders": [
+    {"resourceType":"GMFolder","resourceVersion":"1.0","name":"Rooms","folderPath":"folders/Rooms.yy",},
+    {"resourceType":"GMFolder","resourceVersion":"1.0","name":"AnimationCurves","folderPath":"folders/AnimationCurves.yy",},
+    {"resourceType":"GMFolder","resourceVersion":"1.0","name":"MiniTween","folderPath":"folders/MiniTween.yy",},
+    {"resourceType":"GMFolder","resourceVersion":"1.0","name":"Scripts","folderPath":"folders/Scripts.yy",},
+  ],
+  "IncludedFiles": [],
+  "isEcma": false,
+  "LibraryEmitters": [],
+  "MetaData": {
+    "IDEVersion": "2023.11.1.129",
+  },
+  "resources": [
+    {"id":{"name":"Utilitary","path":"scripts/Utilitary/Utilitary.yy",},},
+    {"id":{"name":"obj_mini_tweener","path":"objects/obj_mini_tweener/obj_mini_tweener.yy",},},
+    {"id":{"name":"ac_defaults","path":"animcurves/ac_defaults/ac_defaults.yy",},},
+    {"id":{"name":"MiniTransform","path":"scripts/MiniTransform/MiniTransform.yy",},},
+    {"id":{"name":"MiniTween","path":"scripts/MiniTween/MiniTween.yy",},},
+    {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
+  ],
+  "RoomOrderNodes": [
+    {"roomId":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
+  ],
+  "templateType": "game",
+  "TextureGroups": [
+    {"resourceType":"GMTextureGroup","resourceVersion":"1.3","name":"Default","autocrop":true,"border":2,"compressFormat":"bz2","directory":"","groupParent":null,"isScaled":true,"loadType":"default","mipsToGenerate":0,"targets":-1,},
+  ],
+}

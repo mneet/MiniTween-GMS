@@ -1,0 +1,12 @@
+{
+  "FolderOrderSettings": [
+    {"name":"Rooms","order":10,"path":"folders/Rooms.yy",},
+    {"name":"AnimationCurves","order":11,"path":"folders/AnimationCurves.yy",},
+    {"name":"MiniTween","order":12,"path":"folders/MiniTween.yy",},
+    {"name":"Scripts","order":13,"path":"folders/Scripts.yy",},
+  ],
+  "ResourceOrderSettings": [
+    {"name":"obj_mini_tweener","order":2,"path":"objects/obj_mini_tweener/obj_mini_tweener.yy",},
+    {"name":"MiniTween","order":1,"path":"scripts/MiniTween/MiniTween.yy",},
+  ],
+}
