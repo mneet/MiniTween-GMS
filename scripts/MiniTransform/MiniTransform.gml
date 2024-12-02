@@ -27,21 +27,24 @@ function MiniTransform() constructor
 	children = noone;
 	
 	// ATTRIBUTES
-	position = new Vector2(0,0);
-	local_position = new Vector2(0,0);
-	
-	scale = new Vector2(1,1);
-	local_scale = new Vector2(1,1);
-	
-	alpha = 1;	
-	local_alpha = 1;
-	
+	position =  new Vector2();
+	xscale =  new Vector2();
+	alpha = 1;		
 	rotation = 0;
-	local_rotation = 0;
+	
+	local = {};
+	with (local)
+	{
+		position =  new Vector2();
+		xscale =  new Vector2();
+		alpha = 1;		
+		rotation = 0;	
+	}
 	
 	size = new Vector2(16,16);
 	base_size = new Vector2(16,16);
-
+	
+	sprite = noone;
 	color = c_white;
 	
 	sub_img = 0;
@@ -55,15 +58,15 @@ function MiniTransform() constructor
 	{
 		if (parent == noone) return;
 		
-		position.x =  parent.position.x + local_position.x;
-		position.y =  parent.position.y + local_position.y;
+		x =  parent.x + local.x;
+		y =  parent.y + local.y;
 		
-		scale.x =  parent.scale.x + local_scale.x;
-		scale.y =  parent.scale.y + local_scale.y;
+		xscale = parent.xscale + local.x;
+		yscale = parent.yscale + local.y;
 		
-		alpha = local_alpha * parent.alpha;
+		alpha = local.alpha * parent.alpha;
 		
-		rotation = local_rotation + parent.rotation;
+		rotation = local.rotation + parent.rotation;
 		
 		size.x = base_size.x * scale.x;
 		size.y = base_size.y * scale.y;
@@ -83,22 +86,22 @@ function MiniTransform() constructor
 
 	static transform_add_scale = function(_x, _y)
 	{
-		scale.x += _x;
-		scale.y += _y;
+		xscale += _x;
+		yscale += _y;
 		
-		local_scale.x += _x;
-		local_scale.y += _y;
+		local.xscale += _x;
+		local.yscale += _y;
 		
 		return self;
 	}
 	
 	static transform_add_position = function(_x, _y)
 	{
-		position.x += _x;
-		position.y += _y;
+		x += _x;
+		y += _y;
 		
-		local_position.x += _x;
-		local_position.y += _y;
+		local.x += _x;
+		local.y += _y;
 		
 		return self;
 	}
@@ -106,16 +109,15 @@ function MiniTransform() constructor
 	static transform_add_alpha = function(_alpha)
 	{
 		alpha += _alpha;	
-		local_alpha += _alpha;
-		
-		
+		local.alpha += _alpha;
+				
 		return self;
 	}
 	
 	static transform_add_rotation = function(_rotation)
 	{
 		rotation += _rotation;	
-		local_rotation += _rotation;
+		local.rotation += _rotation;
 		
 		return self;
 	}
@@ -126,22 +128,22 @@ function MiniTransform() constructor
 	
 	static transform_set_scale = function(_x, _y)
 	{
-		scale.x = _x;
-		scale.y = _y;
+		xscale = _x;
+		yscale = _y;
 		
-		local_scale.x = _x;
-		local_scale.y = _y;
+		local.xscale = _x;
+		local.yscale = _y;
 		
 		return self;
 	}
 	
 	static transform_set_position = function(_x, _y)
 	{
-		position.x = _x;
-		position.y = _y;
+		x = _x;
+		y = _y;
 		
-		local_position.x = _x;
-		local_position.y = _y;
+		local.x = _x;
+		local.y = _y;
 		
 		return self;
 	}
@@ -149,7 +151,7 @@ function MiniTransform() constructor
 	static transform_set_alpha = function(_alpha)
 	{
 		alpha = _alpha;	
-		local_alpha = _alpha;
+		local.alpha = _alpha;
 		
 		
 		return self;
@@ -158,7 +160,7 @@ function MiniTransform() constructor
 	static transform_set_rotation = function(_rotation)
 	{
 		rotation = _rotation;	
-		local_rotation = _rotation;
+		local.rotation = _rotation;
 		
 		return self;
 	}

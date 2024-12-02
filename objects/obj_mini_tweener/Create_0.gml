@@ -40,4 +40,4 @@ add_tween = function(_tween)
 #endregion
 
 
-global.mini_tween_manager.manager_object = id;
+global.tween_manager.manager_object = id;

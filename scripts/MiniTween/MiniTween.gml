@@ -32,10 +32,38 @@
 
 #region MINI TWEEN SYSTEM
 
-global.mini_tween_manager = {};
-with(global.mini_tween_manager)
+global.tween_manager = {};
+with(global.tween_manager)
 {
-	manager_object = noone;	
+	manager_object = noone;				
+	
+	easing_functions = [
+	    EaseLinear,        // EASE_IN
+	    EaseInSine,        // EASE_IN
+	    EaseOutSine,       // EASE_OUT
+	    EaseInOutSine,     // EASE_IN_OUT
+	    EaseInCubic,       // CUBIC_IN
+	    EaseOutCubic,      // CUBIC_OUT
+	    EaseInOutCubic,    // CUBIC_IN_OUT
+	    EaseInQuart,       // QUART_IN
+	    EaseOutQuart,      // QUART_OUT
+	    EaseInOutQuart,    // QUART_IN_OUT
+	    EaseInExpo,        // EXPO_IN
+	    EaseOutExpo,       // EXPO_OUT
+	    EaseInOutExpo,     // EXPO_IN_OUT
+	    EaseInCirc,        // CIRC_IN
+	    EaseOutCirc,       // CIRC_OUT
+	    EaseInOutCirc,     // CIRC_IN_OUT
+	    EaseInBack,        // BACK_IN
+	    EaseOutBack,       // BACK_OUT
+	    EaseInOutBack,     // BACK_IN_OUT
+	    EaseInElastic,     // ELASTIC_IN
+	    EaseOutElastic,    // ELASTIC_OUT
+	    EaseInOutElastic,  // ELASTIC_IN_OUT
+	    EaseInBounce,      // BOUNCE_IN
+	    EaseOutBounce,     // BOUNCE_OUT
+	    EaseInOutBounce    // BOUNCE_IN_OUT
+	];
 }
 
 enum TWEEN_ATTRIBUTE
@@ -44,64 +72,95 @@ enum TWEEN_ATTRIBUTE
 	SCALE,
 	ALPHA,
 	ROTATION,
-	SUB_IMG
+	SUB_IMG,
+	CUSTOM
 }
 
 enum TWEEN_CURVES
 {
+	LINEAR,
 	EASE_IN,
 	EASE_OUT,
+	EASE_IN_OUT,
+	CUBIC_IN,
+	CUBIC_OUT,
+	CUBIC_IN_OUT,
+	QUART_IN,
+	QUART_OUT,
+	QUART_IN_OUT,
+	EXPO_IN,
+	EXPO_OUT,
+	EXPO_IN_OUT,
+	CIRC_IN,
+	CIRC_OUT,
+	CIRC_IN_OUT,
+	BACK_IN,
+	BACK_OUT,
+	BACK_IN_OUT,
 	ELASTIC_IN,
 	ELASTIC_OUT,
-	MID_SLOW,
+	ELASTIC_IN_OUT,
 	BOUNCE_IN,
-	BOUNCE_OUT
+	BOUNCE_OUT,
+	BOUNCE_IN_OUT
 }
 
-function MiniTween(_tween_target, _curve, _channel, _timer) constructor
+enum TWEEN_TYPE
 {
-	curve = _curve;
-	channel = _channel;
-	timer_total = _timer;
-	delay_total = 0;
+	MINI_TRANSFORM,
+	OBJECT
+}
+
+#endregion
+
+#region STRUCTS
+
+function MiniTween(_tween_target, _type, _curve, _timer = 0) constructor
+{
+	// Curve
+	tween_channel = noone;
+	tween_curve = _curve;
 	
+	// Timers
+	tween_timer_total = _timer;
+	tween_timer = 0;
+	
+	tween_delay_total = 0;
+	tween_delay_timer = 0;
+	
+	// Tween Control
 	tween_attribute = TWEEN_ATTRIBUTE.POSITION;
 	tween_target = _tween_target;
-			
+	tween_type = _type;
+
+	// Function
 	on_complete_func = noone;
 	on_complete_func_param = tween_target;
 	
-	// Position
-	tween_to_position = 0;
-	tween_position_diff = 0;
-	tween_position_start = 0;
+	// Attributes
+	tween_to_value = 0;
+	tween_start_value = 0;
+	tween_diff_value = 0;
 	
-	tween_to_scale = 0;
-	tween_scale_diff = 0;
-	tween_scale_start = 0;
-	
-	tween_to_alpha = 1;
-	tween_alpha_diff = 0;
-	tween_alpha_start = 0;
-	
-	tween_to_rotation = 0;
-	tween_rotation_diff = 0;
-	tween_rotation_start = 0;
+	custom_attribute_name = "";
 		
-	// Flags
-	tween_timer = 0;
-	tween_delay_timer = 0;
-	tween_delayed = false;
-	tween_channel = animcurve_get_channel(curve, channel);
-	
-	tween_basic = true;
-	
-	tween_started = false;
+	// Tweening Control
 	tween_progress = 0;
-	
+	tween_delayed = false;		
+	tween_basic = true;	
+	tween_started = false;
 	destroy_flag = false;
+		
+	tween_with_curve = false;
+	tween_vec2 = false;
+	tween_vec2_values = new Vector2(false, false);
 	
-	#region Tween Building
+	// LOOPING
+	tween_loops = 1;
+	tween_ping_pong = false;
+	tween_pong_flag = false;		
+		
+	#region TWEEN BUILDER
 	
 	///@function		set_on_complete(_function)
 	///@description		Set a function to run at the end of the Tween
@@ -115,28 +174,35 @@ function MiniTween(_tween_target, _curve, _channel, _timer) constructor
 	///@description		Set a delay to start the Tween
 	static set_delay = function(_delay)
 	{
-		delay_total = _delay;
+		tween_delay_total = _delay;
+		return self;
 	}
 	
 	///@function		tween_position(_position)
 	///@description		Tween a node to an given position	
-	static tween_position = function(_position)
+	static tween_position = function(_x, _y)
 	{
 		tween_attribute = TWEEN_ATTRIBUTE.POSITION;
-		tween_to_position = _position;
-		tween_position_diff = new Vector2(tween_target.position.x - _position.x, tween_target.position.y - _position.y);
-		tween_position_start = variable_clone(tween_target.position);
+		tween_to_value = new Vector2(_x ,_y);
+		
+		tween_vec2 = true;
+		tween_vec2_values.x = _x != 0;
+		tween_vec2_values.y = _y != 0;
+		
 		return self;
 	}
 	
 	///@function		tween_scale(_scale)
 	///@description		Tween a node to an given scale	
-	static tween_scale = function(_scale)
+	static tween_scale = function(_x, _y)
 	{
 		tween_attribute = TWEEN_ATTRIBUTE.SCALE;
-		tween_to_position = _scale;
-		tween_scale_diff = new Vector2(-(tween_target.scale.x - _scale.x), -(tween_target.scale.y - _scale.y));
-		tween_scale_start = variable_clone(tween_target.scale);
+		tween_to_value = new Vector2(_x, _y);
+		
+		tween_vec2 = true;
+		tween_vec2_values.x = _x != 0;
+		tween_vec2_values.y = _y != 0;
+
 		return self;
 	}
 	
@@ -145,9 +211,8 @@ function MiniTween(_tween_target, _curve, _channel, _timer) constructor
 	static tween_alpha = function(_alpha)
 	{
 		tween_attribute = TWEEN_ATTRIBUTE.ALPHA;
-		tween_to_position = _alpha;
-		tween_alpha_diff = tween_target.alpha - _alpha;
-		tween_alpha_start = variable_clone(tween_target.alpha);
+		tween_to_value = _alpha;
+		
 		return self;
 	}
 	
@@ -156,9 +221,8 @@ function MiniTween(_tween_target, _curve, _channel, _timer) constructor
 	static tween_rotation = function(_rotation)
 	{
 		tween_attribute = TWEEN_ATTRIBUTE.ROTATION;
-		tween_to_position = _rotation;
-		tween_rotation_diff = tween_target.rotation - _rotation;
-		tween_alpha_start = variable_clone(tween_target.rotation);
+		tween_to_value = _rotation;
+		
 		return self;
 	}
 	
@@ -168,12 +232,24 @@ function MiniTween(_tween_target, _curve, _channel, _timer) constructor
 	{
 		tween_attribute = TWEEN_ATTRIBUTE.SUB_IMG;
 		tween_basic = false;
+		
+		return self;
+	}
+	
+	///@function		tween_custom_curve(_)
+	///@description		Tween using a custom animation curve
+	static tween_custom_curve = function(_animcurve, _channel)
+	{
+		tween_channel = animcurve_get_channel(_animcurve, _channel);
+		tween_with_curve = true;
 		return self;
 	}
 	
 	#endregion
 	
-	#region Tween System
+	#region INTERNAL SYSTEM
+	
+	#region TWEEN CONFIGURATION
 	
 	///@function		__execute_on_complete(_)
 	///@description		Execute on complete function
@@ -185,79 +261,228 @@ function MiniTween(_tween_target, _curve, _channel, _timer) constructor
 		}
 	}
 	
-	///@function		__tween_process()
-	///@description		Handle the tweening process
-	static __tween_process = function()
-	{		
-		if (!tween_delayed)
-		{		
-			tween_delay_timer += delta_time_seconds();
-			if (tween_delay_timer >= delay_total)
-			{			
-				tween_delayed = true;
-			}
-		}
-						
-		if (tween_delayed && !destroy_flag)
-		{	
-			var _tween_ended = false;
-			if (tween_basic)
-			{
-				_tween_ended = __tween_basic_attributes();	
-			}
-			else
-			{
-				_tween_ended = __tween_specific_attributes();
-			}
+	static __tween_get_attribute_mini_transform = function(_attribute)
+	{
+		var _value = noone;
+		switch (_attribute)
+		{
+			case TWEEN_ATTRIBUTE.POSITION:
+				_value = tween_target.position;
+				break;
+				
+			case TWEEN_ATTRIBUTE.SCALE:
+				_value = tween_target.scale;
+				break;
+				
+			case TWEEN_ATTRIBUTE.ALPHA:
+				_value = tween_target.alpha;	
+				break;
+				
+			case TWEEN_ATTRIBUTE.ROTATION:
+				_value = tween_target.rotation;	
+				break;
 			
-			if (_tween_ended)
-			{
-				__execute_on_complete();
-				destroy_flag = true;
-			}
-		}	
+			case TWEEN_ATTRIBUTE.CUSTOM:	
+				_value = variable_struct_get(tween_target, custom_attribute_name);
+				break;
+				
+		}
+		return _value
+	}	
+	
+	static __tween_get_attribute_object = function(_attribute)
+	{
+		var _value = noone;
+		switch (_attribute)
+		{
+			case TWEEN_ATTRIBUTE.POSITION:
+				_value = new Vector2(tween_target.x, tween_target.y);
+				break;
+				
+			case TWEEN_ATTRIBUTE.SCALE:
+				_value = new Vector2(tween_target.image_xscale, tween_target.image_yscale);
+				break;
+				
+			case TWEEN_ATTRIBUTE.ALPHA:
+				_value = tween_target.image_alpha;
+				break;
+				
+			case TWEEN_ATTRIBUTE.ROTATION:
+				_value = tween_target.image_angle;
+				break;
+				
+			case TWEEN_ATTRIBUTE.CUSTOM:	
+				_value = variable_instance_get(tween_target, custom_attribute_name);
+				break;
+				
+		}
+		return _value;
+	}	
+	
+	static __tween_get_attribute = function(_attribute)
+	{
+		var _value = 0;
+		switch (tween_type)
+		{
+			case TWEEN_TYPE.OBJECT:			
+				_value = __tween_get_attribute_object(_attribute);
+				break;
+				
+			case TWEEN_TYPE.MINI_TRANSFORM:	
+				_value = __tween_get_attribute_mini_transform(_attribute);
+				break;
+		}
+		return _value;
+	}	
+	
+	static __tween_set_attribute_mini_transform = function(_attribute, _value)
+	{
+		switch (_attribute)
+		{
+			case TWEEN_ATTRIBUTE.POSITION:
+				tween_target.position = variable_clone(_value);
+				break;
+				
+			case TWEEN_ATTRIBUTE.SCALE:
+				tween_target.scale = variable_clone(_value);
+				break;
+				
+			case TWEEN_ATTRIBUTE.ALPHA:
+				tween_target.alpha = variable_clone(_value);	
+				break;
+				
+			case TWEEN_ATTRIBUTE.ROTATION:
+				tween_target.rotation = variable_clone(_value);	
+				break;
+			
+			case TWEEN_ATTRIBUTE.CUSTOM:	
+				_value = variable_struct_set(tween_target, custom_attribute_name, _value);
+				break;				
+		}
+	}	
+	
+	static __tween_set_attribute_object = function(_attribute, _value)
+	{
+		switch (_attribute)
+		{
+			case TWEEN_ATTRIBUTE.POSITION:
+				variable_instance_set(tween_target, "x", _value.x);
+				variable_instance_set(tween_target, "y", _value.y);
+				break;
+				
+			case TWEEN_ATTRIBUTE.SCALE:
+				variable_instance_set(tween_target, "image_xscale", _value.x);
+				variable_instance_set(tween_target, "image_yscale", _value.y);
+				break;
+				
+			case TWEEN_ATTRIBUTE.ALPHA:
+				variable_instance_set(tween_target, "image_alpha", _value);	
+				break;
+				
+			case TWEEN_ATTRIBUTE.ROTATION:
+				variable_instance_set(tween_target, "image_angle", _value);	
+				break;
+			
+			case TWEEN_ATTRIBUTE.CUSTOM:	
+				_value = variable_instance_set(tween_target, custom_attribute_name, _value);
+				break;	
+				
+		}
+	}	
+	
+	static __tween_set_attribute = function(_attribute, _value)
+	{
+		switch (tween_type)
+		{
+			case TWEEN_TYPE.OBJECT:			
+				__tween_set_attribute_object(_attribute, _value);
+				break;
+				
+			case TWEEN_TYPE.MINI_TRANSFORM:	
+				__tween_set_attribute_mini_transform(_attribute, _value);
+				break;
+		}
 	}
+	
+	
+	///@function		__tween_calculate_diff(_)
+	///@description		Calculate values when start the tweening process
+	static __tween_calculate_diff = function()
+	{
+		if (tween_vec2)
+		{
+			tween_start_value = __tween_get_attribute(tween_attribute);			
+			tween_diff_value = new Vector2(-(tween_start_value.x - tween_to_value.x), -(tween_start_value.y - tween_to_value.y));
+		}
+		else
+		{
+			tween_start_value =  __tween_get_attribute(tween_attribute);
+			tween_diff_value = -(tween_start_value - tween_to_value);
+		}
+	}
+		
+	#endregion
+	
+	#region STEP FUNCTIONS
 	
 	///@function		__tween_basic_attributes()
 	///@description		Tween basic attributes like scale, position, etc
 	__tween_basic_attributes = function()
 	{	
+		// State flag
 		var _tween_ended = false;
-
+		
+		// Increment timer using delta time
 		tween_timer += delta_time_seconds();
-		tween_progress = animcurve_channel_evaluate(tween_channel, tween_timer / timer_total);
-			
-		switch (tween_attribute)
+		tween_progress = __tween_basic_progress();
+		
+		// Apply curve
+		var _value = 0;
+		if (tween_vec2)
 		{
-			case TWEEN_ATTRIBUTE.POSITION:
-				var _new_pos = new Vector2(0,0);
-				_new_pos.x = tween_position_start.x + (tween_position_diff.x * tween_progress);
-				_new_pos.y = tween_position_start.y + (tween_position_diff.y * tween_progress);
-				tween_target.position = variable_clone(_new_pos);
-				break;
-			case TWEEN_ATTRIBUTE.SCALE:
-				var _new_scale = new Vector2(0,0);
-				_new_scale.x = tween_scale_start.x + (tween_scale_diff.x * tween_progress);
-				_new_scale.y = tween_scale_start.y + (tween_scale_diff.y * tween_progress);
-				tween_target.scale = variable_clone(_new_scale);
-				break;
-			case TWEEN_ATTRIBUTE.ALPHA:
-				var _new_alpha = 0;
-				_new_alpha = tween_alpha_start + (tween_alpha_diff * tween_progress);
-				tween_target.alpha = variable_clone(_new_alpha);
-				break;
-			case TWEEN_ATTRIBUTE.ROTATION:
-				var _new_rotation = 0;
-				_new_rotation = tween_rotation_start + (tween_rotation_diff * tween_progress);
-				tween_target.rotation = variable_clone(_new_rotation);
-				break;
-		}			
-		tween_target.update_children();
+			_value = new Vector2(0,0);
+			_value.x = tween_progress.x;
+			_value.y = tween_progress.y;
+		}
+		else
+		{
+			_value = tween_progress;			
+		}
+		__tween_set_attribute(tween_attribute, _value);
 		
-		_tween_ended = tween_timer > timer_total ? true : false;
+		// Call target update function
+		//tween_target.update_children();
 		
-		return _tween_ended;
+		// Check if ended
+		_tween_ended = tween_timer > tween_timer_total ? true : false;
 		
+		return _tween_ended;		
+	}
+	
+	///@function		__tween_basic_progress()
+	///@description		Apply the Easing Functions or animation curves
+	__tween_basic_progress = function()
+	{
+		var _progress = 0;
+		if (tween_with_curve)
+		{
+			_progress = animcurve_channel_evaluate(tween_channel, tween_timer / tween_timer_total);	
+		}
+		else
+		{
+			if (tween_vec2)
+			{
+				_progress = new Vector2();
+				_progress.x = global.tween_manager.easing_functions[tween_curve](tween_timer, tween_start_value.x, tween_diff_value.x, tween_timer_total);	
+				_progress.y = global.tween_manager.easing_functions[tween_curve](tween_timer, tween_start_value.y, tween_diff_value.y, tween_timer_total);	
+			}
+			else
+			{
+				_progress = global.tween_manager.easing_functions[tween_curve](tween_timer, tween_start_value, tween_diff_value, tween_timer_total);
+			}
+		}	
+		
+		return _progress;
 	}
 	
 	///@function		__tween_specific_attributes()
@@ -288,136 +513,141 @@ function MiniTween(_tween_target, _curve, _channel, _timer) constructor
 		return _tween_ended;
 	}
 	
+	///@function		__tween_process()
+	///@description		Handle the tweening process
+	static __tween_process = function()
+	{	
+		
+		if (tween_type == TWEEN_TYPE.MINI_TRANSFORM)
+		{
+			if (!weak_ref_alive(tween_target_weak_ref))
+			{
+				destroy_flag = true;
+				return;
+			}			
+		}
+		else if (tween_type == TWEEN_TYPE.OBJECT)
+		{
+			if (!instance_exists(tween_target))
+			{
+				destroy_flag = true;
+				return;
+			}
+		}	
+		
+		if (!tween_started)
+		{
+			tween_started = true;
+			__tween_calculate_diff();
+		}
+		
+		if (!tween_delayed)
+		{		
+			tween_delay_timer += delta_time_seconds();
+			if (tween_delay_timer >= tween_delay_total)
+			{			
+				tween_delayed = true;
+			}
+		}
+						
+		if (tween_delayed && !destroy_flag)
+		{	
+			var _tween_ended = false;
+			if (tween_basic)
+			{
+				_tween_ended = __tween_basic_attributes();	
+			}
+			else
+			{
+				_tween_ended = __tween_specific_attributes();
+			}
+			
+			if (_tween_ended)
+			{
+				__execute_on_complete();
+				destroy_flag = true;
+			}
+		}	
+	}
+	
+	#endregion
+	
 	#endregion
 }
 
-function MiniTweenObject(_tween_target, _curve, _channel, _timer) : MiniTween(_tween_target, _curve, _channel, _timer) constructor
-{
-	///@function		__tween_basic_attributes()
-	///@description		Tween basic attributes like scale, position, etc
-	__tween_basic_attributes = function()
-	{	
-		var _tween_ended = false;
+#endregion
 
-		tween_timer += delta_time_seconds();
-		tween_progress = animcurve_channel_evaluate(tween_channel, tween_timer / timer_total);
-			
-		switch (tween_attribute)
-		{
-			case TWEEN_ATTRIBUTE.POSITION:
-				var _new_pos = new Vector2(0,0);
-				_new_pos.x = tween_position_start.x + (tween_position_diff.x * tween_progress);
-				_new_pos.y = tween_position_start.y + (tween_position_diff.y * tween_progress);
-				tween_target.x = variable_clone(_new_pos.x);
-				tween_target.y = variable_clone(_new_pos.y);
-				break;
-			case TWEEN_ATTRIBUTE.SCALE:
-				var _new_scale = new Vector2(0,0);
-				_new_scale.x = tween_scale_start.x + (tween_scale_diff.x * tween_progress);
-				_new_scale.y = tween_scale_start.y + (tween_scale_diff.y * tween_progress);
-				tween_target.image_xscale = variable_clone(_new_scale.x);
-				tween_target.image_yscale = variable_clone(_new_scale.y);
-				break;
-			case TWEEN_ATTRIBUTE.ALPHA:
-				var _new_alpha = 0;
-				_new_alpha = tween_alpha_start + (tween_alpha_diff * tween_progress);
-				tween_target.image_alpha = variable_clone(_new_alpha);
-				break;
-			case TWEEN_ATTRIBUTE.ROTATION:
-				var _new_rotation = 0;
-				_new_rotation = tween_rotation_start + (tween_rotation_diff * tween_progress);
-				tween_target.image_angle = variable_clone(_new_rotation);
-				break;
-		}			
-		
-		_tween_ended = tween_timer > timer_total ? true : false;
-		
-		return _tween_ended;
-		
-	}
+
+#region SYSTEM MANAGER
+
+function __mini_tween_start_sys()
+{
+	var _started = false;
+	var _manager = global.tween_manager.manager_object;
 	
-	///@function		__tween_sub_img()
-	///@description		Tween sub-image or image_index
-	__tween_sub_img = function()
+	if (!instance_exists(_manager))
 	{
-		var _tween_ended = false;
-		tween_target.image_index += sprite_get_speed(tween_target.sprite_index) / game_get_speed(gamespeed_fps);	
-		if (tween_target.image_index > sprite_get_number(tween_target.sprite_index))
-		{
-			tween_target.image_index = 0;
-			_tween_ended = true;
-		}
-		return _tween_ended;
+		global.tween_manager.manager_object = instance_create_depth(-100, -100, 0, obj_mini_tweener);
+		
+		
+		_started = true;
 	}
+	else _started = true;
+	
+	return _started;
+}
+
+function __mini_tween_get_manager()
+{
+	if (global.tween_manager.manager_object == noone)
+	{
+		__mini_tween_start_sys();	
+	}
+	return global.tween_manager.manager_object;
 }
 
 #endregion
 
 #region UTILITY FUNCTIONS
 
+///@function									__mini_tween_basic(_tween_target, _curve, _channel, _timer)
+///@description									Function used to create a Tween for a MiniTransform struct
+///@param {struct} _tween_target				MiniTransform struct to be tweened
+///@param {real} _type							Timer the tweening will last in seconds
+///@param {real} _timer							Timer the tweening will last in seconds
+///@param {real} _curve							Animation curve enum TWEEN_CURVES
+function __mini_tween_basic(_tween_target, _type, _timer, _curve = TWEEN_CURVES.LINEAR)
+{
+	var _manager = __mini_tween_get_manager(),
+		_tween_struct = noone;
+		
+	var _tween = new MiniTween(_tween_target ,_type, _curve, _timer);
+	_tween_struct = _manager.add_tween(_tween);
+		
+	return _tween_struct;
+}
+
 ///@function									mini_tween(_tween_target, _curve, _channel, _timer)
 ///@description									Function used to create a Tween for a MiniTransform struct
 ///@param {struct} _tween_target				MiniTransform struct to be tweened
-///@param {Asset.GMAnimCurve} _curve			Animation curve asset
-///@param {real} _channel						Animation curve channel index
 ///@param {real} _timer							Timer the tweening will last in seconds
-function mini_tween(_tween_target, _curve, _channel, _timer)
+///@param {real} _curve							Animation curve enum TWEEN_CURVES
+function mini_tween(_tween_target, _timer, _curve = TWEEN_CURVES.LINEAR)
 {
-	var _manager = global.mini_tween_manager.manager_object,
-		_tween_struct = noone;
-		
-	if (instance_exists(_manager))
-	{
-		var _tween = new MiniTween(_tween_target, _curve, _channel, _timer);
-		_tween_struct = _manager.add_tween(_tween);
-	}
+	var _tween = __mini_tween_basic(_tween_target, TWEEN_TYPE.MINI_TRANSFORM, _timer, _curve);		
 	
-	return _tween_struct;
+	return _tween;
 }
 
 ///@function									mini_tween_object(_tween_target, _curve, _channel, _timer)
 ///@description									Function used to create a Tween for a Object
-///@param {Asset.GMObject} _tween_target		Object to be tweened
-///@param {Asset.GMAnimCurve} _curve			Animation curve asset
-///@param {real} _channel						Animation curve channel index
+///@param {ID.Instance} _tween_target			Object to be tweened
 ///@param {real} _timer							Timer the tweening will last in seconds
-function mini_tween_object(_tween_target, _curve, _channel, _timer)
+///@param {real} _curve							Animation curve enum TWEEN_CURVES
+function mini_tween_object(_tween_target, _timer, _curve)
 {
-	var _manager = global.mini_tween_manager.manager_object,
-		_tween_struct = noone;
-		
-	if (instance_exists(_manager))
-	{
-		var _tween = new MiniTweenObject(_tween_target, _curve, _channel, _timer);
-		_tween_struct = _manager.add_tween(_tween);
-	}
-	
-	return _tween_struct;
+	var _tween = __mini_tween_basic(_tween_target, TWEEN_TYPE.OBJECT, _timer, _curve);		
+	return _tween;
 }
-
-///@function									mini_tween_object(_tween_target, _curve, _channel, _timer)
-///@description									Function used to create a Tween for a Node (Node is an external system for creating interfaces)
-///@param {struct} _node						Node struct to be tweened
-///@param {Asset.GMAnimCurve} _curve			Animation curve asset
-///@param {real} _channel						Animation curve channel index
-///@param {real} _timer							Timer the tweening will last in seconds
-///@param {struct} [_target]					The dafault target is the node own transform, but if you want to target another transform you can pass it here
-function mini_tween_node(_node, _curve, _channel, _timer, _target = _node.transform)
-{
-	var _manager = global.mini_tween_manager.manager_object,
-		_tween_struct = noone;
-		
-	if (instance_exists(_manager))
-	{
-		var _tween = new MiniTween(_target, _curve, _channel, _timer);
-		_tween.on_complete_func_param = _node;
-		
-		_tween_struct = _manager.add_tween(_tween);
-	}
-	
-	return _tween_struct;
-}
-
-// mini_tween_node is a function meant to be used only with NODE, an interface system made by M. Neet
 
 #endregion
