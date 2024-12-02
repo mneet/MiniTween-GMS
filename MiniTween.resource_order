@@ -2,9 +2,9 @@
   "FolderOrderSettings": [
     {"name":"AnimationCurves","order":11,"path":"folders/AnimationCurves.yy",},
     {"name":"MiniTween","order":12,"path":"folders/MiniTween.yy",},
+    {"name":"Objects","order":14,"path":"folders/Objects.yy",},
     {"name":"Rooms","order":10,"path":"folders/Rooms.yy",},
     {"name":"Scripts","order":13,"path":"folders/Scripts.yy",},
-    {"name":"Objects","order":14,"path":"folders/Objects.yy",},
     {"name":"Sprites","order":15,"path":"folders/Sprites.yy",},
   ],
   "ResourceOrderSettings": [

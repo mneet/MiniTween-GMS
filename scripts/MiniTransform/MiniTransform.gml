@@ -82,6 +82,66 @@ function MiniTransform() constructor
 	
 	#endregion
 	
+	static transform_convert_and_set_att = function(_attribute, _value)
+	{
+		switch (_attribute)
+		{
+			case TWEEN_ATTRIBUTE_X: 
+				position.x = _value;
+				break;
+			case TWEEN_ATTRIBUTE_Y:
+				position.y = _value;
+				break
+			case TWEEN_ATTRIBUTE_XSCALE: 
+				scale.x = _value;
+				break;
+			case TWEEN_ATTRIBUTE_YSCALE: 
+				scale.y = _value;
+				break;
+			case TWEEN_ATTRIBUTE_ALPHA: 
+				alpha = _value;
+				break;
+			case TWEEN_ATTRIBUTE_ROTATION: 
+				rotation = _value;
+			case TWEEN_ATTRIBUTE_SUB_IMG:
+				sub_img = _value;
+			default:
+				variable_struct_set(self, _attribute, _value)
+				break;
+		}
+	}
+	
+	static transform_convert_and_get_att = function(_attribute)
+	{
+		var _value;
+		switch (_attribute)
+		{
+			case TWEEN_ATTRIBUTE_X: 
+				_value = position.x; 
+				break;
+			case TWEEN_ATTRIBUTE_Y:
+				_value = position.y
+				break
+			case TWEEN_ATTRIBUTE_XSCALE: 
+				_value = scale.x;
+				break;
+			case TWEEN_ATTRIBUTE_YSCALE: 
+				_value = scale.y;
+				break;
+			case TWEEN_ATTRIBUTE_ALPHA: 
+				_value = alpha;
+				break;
+			case TWEEN_ATTRIBUTE_ROTATION: 
+				_value = rotation;
+			case TWEEN_ATTRIBUTE_SUB_IMG:
+				_value = sub_img;
+			default:
+				_value = variable_struct_get(self, _attribute)
+				break;
+		}
+		return variable_clone(_value);
+	}
+	
 	#region ADD
 
 	static transform_add_scale = function(_x, _y)
