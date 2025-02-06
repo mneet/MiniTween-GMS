@@ -1,5 +1,4 @@
-/// @description Inserir descrição aqui
-// Você pode escrever seu código neste editor
+/// @description MiniTween Create
 
 tween_queue = [];
 tween_amnt = 0;

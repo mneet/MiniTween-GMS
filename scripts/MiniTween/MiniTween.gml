@@ -36,73 +36,6 @@ global.tween_manager = {};
 with(global.tween_manager)
 {
 	manager_object = noone;				
-	
-	easing_functions = [
-	    EaseLinear,        // EASE_IN
-	    EaseInSine,        // EASE_IN
-	    EaseOutSine,       // EASE_OUT
-	    EaseInOutSine,     // EASE_IN_OUT
-	    EaseInCubic,       // CUBIC_IN
-	    EaseOutCubic,      // CUBIC_OUT
-	    EaseInOutCubic,    // CUBIC_IN_OUT
-	    EaseInQuart,       // QUART_IN
-	    EaseOutQuart,      // QUART_OUT
-	    EaseInOutQuart,    // QUART_IN_OUT
-	    EaseInExpo,        // EXPO_IN
-	    EaseOutExpo,       // EXPO_OUT
-	    EaseInOutExpo,     // EXPO_IN_OUT
-	    EaseInCirc,        // CIRC_IN
-	    EaseOutCirc,       // CIRC_OUT
-	    EaseInOutCirc,     // CIRC_IN_OUT
-	    EaseInBack,        // BACK_IN
-	    EaseOutBack,       // BACK_OUT
-	    EaseInOutBack,     // BACK_IN_OUT
-	    EaseInElastic,     // ELASTIC_IN
-	    EaseOutElastic,    // ELASTIC_OUT
-	    EaseInOutElastic,  // ELASTIC_IN_OUT
-	    EaseInBounce,      // BOUNCE_IN
-	    EaseOutBounce,     // BOUNCE_OUT
-	    EaseInOutBounce    // BOUNCE_IN_OUT
-	];
-}
-
-enum TWEEN_ATTRIBUTE
-{
-	POSITION,
-	SCALE,
-	ALPHA,
-	ROTATION,
-	SUB_IMG,
-	CUSTOM
-}
-
-enum TWEEN_CURVES
-{
-	LINEAR,
-	EASE_IN,
-	EASE_OUT,
-	EASE_IN_OUT,
-	CUBIC_IN,
-	CUBIC_OUT,
-	CUBIC_IN_OUT,
-	QUART_IN,
-	QUART_OUT,
-	QUART_IN_OUT,
-	EXPO_IN,
-	EXPO_OUT,
-	EXPO_IN_OUT,
-	CIRC_IN,
-	CIRC_OUT,
-	CIRC_IN_OUT,
-	BACK_IN,
-	BACK_OUT,
-	BACK_IN_OUT,
-	ELASTIC_IN,
-	ELASTIC_OUT,
-	ELASTIC_IN_OUT,
-	BOUNCE_IN,
-	BOUNCE_OUT,
-	BOUNCE_IN_OUT
 }
 
 enum TWEEN_TYPE
@@ -127,7 +60,7 @@ function MiniTween(_tween_target, _timer = 0) constructor
 {
 	// Curve
 	tween_channel = noone;
-	tween_curve = TWEEN_CURVES.LINEAR;
+	tween_curve = EASING_CURVES.LINEAR;
 	
 	// Timers
 	tween_timer_total = _timer;
@@ -137,10 +70,10 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	tween_delay_timer = 0;
 	
 	// Tween Control
-	tween_attribute = TWEEN_ATTRIBUTE.POSITION;
+	tween_attribute = "";
 	tween_target = _tween_target;
-	tween_type = noone;
-
+	tween_is_struct = false;
+	tween_target_weak_ref = noone;
 	// Function
 	on_complete_func = noone;
 	on_complete_func_param = tween_target;
@@ -150,6 +83,9 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	tween_start_value = 0;
 	tween_diff_value = 0;
 	
+	tween_first_start_value = "";
+	tween_first_to_value = "";
+	
 	custom_attribute_name = "";
 		
 	// Tweening Control
@@ -158,6 +94,7 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	tween_basic = true;	
 	tween_started = false;
 	destroy_flag = false;
+	tween_reverse = false;
 		
 	tween_with_curve = false;
 	tween_vec2 = false;
@@ -166,7 +103,7 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	// LOOPING
 	tween_loops = 1;
 	tween_ping_pong = false;
-	tween_pong_flag = false;		
+	tween_ping_pong_flag = true;
 		
 	#region TWEEN BUILDER
 	
@@ -186,11 +123,11 @@ function MiniTween(_tween_target, _timer = 0) constructor
 		return self;
 	}
 	
-	///@function		set_ease(_delay)
-	///@description		Set a easing method to be used on the tweening process
-	static set_ease = function(_easing_method)
+	///@function		set_ease(_easing_curve)
+	///@description		Set a easing curve to be used on the tweening process
+	static set_ease = function(_easing_curve)
 	{
-		tween_curve = _easing_method;
+		tween_curve = _easing_curve;
 		return self;
 	}
 	
@@ -208,7 +145,7 @@ function MiniTween(_tween_target, _timer = 0) constructor
 		return self;
 	}
 	
-	///@function		tween_scale(_scale)
+	///@function		tween_scale(_x, _y)
 	///@description		Tween a node to an given scale	
 	static tween_scale = function(_x, _y)
 	{
@@ -244,10 +181,12 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	
 	///@function		tween_subimg(_)
 	///@description		Tween a node to an given rotation	
-	static tween_subimg = function()
+	static tween_subimg = function(_reverse = false)
 	{
 		tween_attribute = TWEEN_ATTRIBUTE_SUB_IMG;
 		tween_basic = false;
+		
+		tween_reverse = true;
 		
 		return self;
 	}
@@ -270,6 +209,23 @@ function MiniTween(_tween_target, _timer = 0) constructor
 		return self;
 	}
 	
+	///@function				tween_loop(_)
+	///@description				Amount of times the tween will repeat
+	///@param {real} _amount	Integer amount of times. -1 Will loop untill the tween is stopped or the target is destroyed
+	static tween_loop = function(_amount)
+	{
+		tween_loops = _amount;	
+		return self;
+	}
+	
+	///@function		tween_stop(_)
+	///@description		Force stop the tween, it doesnt return the target attribute to the original value
+	static tween_stop = function()
+	{
+		destroy_flag = true;
+		return self;
+	}
+	
 	#endregion
 	
 	#region INTERNAL SYSTEM
@@ -282,14 +238,14 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	{
 		if (on_complete_func != noone)
 		{
-			on_complete_func(on_complete_func_param);
+			on_complete_func(on_complete_func_param, self);
 		}
 	}
 	
 	static __tween_get_attribute = function(_attribute)
 	{
 		var _value = 0;
-		if (is_struct(tween_target))
+		if (tween_is_struct)
 		{
 			if (is_instanceof(tween_target, MiniTransform))
 			{
@@ -309,20 +265,20 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	
 	static __tween_set_attribute = function(_attribute, _value)
 	{
-		if (is_struct(tween_target))
+		if (tween_is_struct)
 		{
 			if (is_instanceof(tween_target, MiniTransform))
 			{
-				_value = tween_target.transform_convert_and_set_att(_attribute, _value);
+				 tween_target.transform_convert_and_set_att(_attribute, _value);
 			}
 			else
 			{
-				_value = variable_struct_set(tween_target, _attribute, _value);
+				variable_struct_set(tween_target, _attribute, _value);
 			}
 		}
 		else
 		{
-			_value = variable_instance_set(tween_target, _attribute, _value);
+			variable_instance_set(tween_target, _attribute, _value);
 		}
 	}
 		
@@ -340,8 +296,27 @@ function MiniTween(_tween_target, _timer = 0) constructor
 			tween_start_value =  __tween_get_attribute(tween_attribute);
 			tween_diff_value = -(tween_start_value - tween_to_value);
 		}
-	}
 		
+		if (is_string(tween_first_start_value))
+		{
+			tween_first_start_value = variable_clone(tween_start_value);
+			tween_first_to_value = variable_clone(tween_to_value);
+		}
+	}
+	
+	static __tween_configure = function()
+	{
+		if (is_struct(tween_target))
+		{
+			tween_target_weak_ref = weak_ref_create(tween_target);	
+			tween_is_struct = true;
+		}
+		else if (!instance_exists(tween_target))
+		{
+			destroy_flag = true;	
+		}
+	}
+	
 	#endregion
 	
 	#region STEP FUNCTIONS
@@ -368,10 +343,12 @@ function MiniTween(_tween_target, _timer = 0) constructor
 		{
 			__tween_set_attribute(tween_attribute,  tween_progress);		
 		}
-
 		
 		// Call target update function
-		//tween_target.update_children();
+		if (tween_is_struct && struct_exists(tween_target, "update_children"))
+		{
+			tween_target.update_children();
+		}
 		
 		// Check if ended
 		_tween_ended = tween_timer > tween_timer_total ? true : false;
@@ -393,12 +370,12 @@ function MiniTween(_tween_target, _timer = 0) constructor
 			if (tween_vec2)
 			{
 				_progress = new Vector2();
-				_progress.x = global.tween_manager.easing_functions[tween_curve](tween_timer, tween_start_value.x, tween_diff_value.x, tween_timer_total);	
-				_progress.y = global.tween_manager.easing_functions[tween_curve](tween_timer, tween_start_value.y, tween_diff_value.y, tween_timer_total);	
+				_progress.x = global.easing_functions[tween_curve](tween_timer, tween_start_value.x, tween_diff_value.x, tween_timer_total);	
+				_progress.y = global.easing_functions[tween_curve](tween_timer, tween_start_value.y, tween_diff_value.y, tween_timer_total);	
 			}
 			else
 			{
-				_progress = global.tween_manager.easing_functions[tween_curve](tween_timer, tween_start_value, tween_diff_value, tween_timer_total);
+				_progress = global.easing_functions[tween_curve](tween_timer, tween_start_value, tween_diff_value, tween_timer_total);
 			}
 		}	
 		
@@ -412,7 +389,7 @@ function MiniTween(_tween_target, _timer = 0) constructor
 		_tween_ended = false;
 		switch (tween_attribute)
 		{
-			case TWEEN_ATTRIBUTE.SUB_IMG:
+			case TWEEN_ATTRIBUTE_SUB_IMG:
 				_tween_ended = __tween_sub_img();
 				break;
 		}
@@ -421,13 +398,12 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	
 	///@function		__tween_sub_img()
 	///@description		Tween sub-image or sprite_index
-	__tween_sub_img = function()
+	static __tween_sub_img = function()
 	{
 		var _tween_ended = false;
 		tween_target.sub_img += sprite_get_speed(tween_target.sprite) / game_get_speed(gamespeed_fps);	
-		if (tween_target.sub_img > sprite_get_number(tween_target.sprite))
+		if (tween_target.sub_img > sprite_get_number(tween_target.sprite) - 1)
 		{
-			tween_target.sub_img = 0;
 			_tween_ended = true;
 		}
 		return _tween_ended;
@@ -437,30 +413,21 @@ function MiniTween(_tween_target, _timer = 0) constructor
 	///@description		Handle the tweening process
 	static __tween_process = function()
 	{	
-		
-		if (tween_type == TWEEN_TYPE.MINI_TRANSFORM)
+		if (tween_is_struct && !weak_ref_alive(tween_target_weak_ref))
 		{
-			if (!weak_ref_alive(tween_target_weak_ref))
-			{
-				destroy_flag = true;
-				return;
-			}			
+			destroy_flag = true;
+			return;			
 		}
-		else if (tween_type == TWEEN_TYPE.OBJECT)
+		else if (!instance_exists(tween_target))
 		{
-			if (!instance_exists(tween_target))
-			{
-				destroy_flag = true;
-				return;
-			}
-		}	
-		
-		if (!tween_started)
-		{
-			tween_started = true;
-			__tween_calculate_diff();
+			destroy_flag = true;
+			return;			
 		}
-		
+		else if (destroy_flag)
+		{
+			return;	
+		}
+			
 		if (!tween_delayed)
 		{		
 			tween_delay_timer += delta_time_seconds();
@@ -472,6 +439,13 @@ function MiniTween(_tween_target, _timer = 0) constructor
 						
 		if (tween_delayed && !destroy_flag)
 		{	
+			if (!tween_started)
+			{
+
+				tween_started = true;
+				if (tween_basic) __tween_calculate_diff();
+			}
+		
 			var _tween_ended = false;
 			if (tween_basic)
 			{
@@ -485,7 +459,26 @@ function MiniTween(_tween_target, _timer = 0) constructor
 			if (_tween_ended)
 			{
 				__execute_on_complete();
-				destroy_flag = true;
+				tween_loops--;
+				if (tween_loops == 0)
+				{
+					destroy_flag = true;
+				}
+				else
+				{
+					if (tween_ping_pong_flag)
+					{
+						tween_to_value = variable_clone(tween_first_start_value);
+					}
+					else
+					{
+						tween_to_value = variable_clone(tween_first_to_value);
+					}
+					tween_ping_pong_flag = !tween_ping_pong_flag;
+					
+					tween_started  = false;
+					tween_timer = 0;
+				}
 			}
 		}	
 	}
@@ -540,9 +533,9 @@ function mini_tween(_tween_target, _timer)
 		
 	var _tween = new MiniTween(_tween_target, _timer);
 	_tween_struct = _manager.add_tween(_tween);
-		
+	_tween_struct.__tween_configure();
+	
 	return _tween_struct;
 }
-
 
 #endregion

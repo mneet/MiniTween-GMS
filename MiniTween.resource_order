@@ -1,5 +1,5 @@
 {
-  "FolderOrderSettings": [
+  "FolderOrderSettings":[
     {"name":"AnimationCurves","order":11,"path":"folders/AnimationCurves.yy",},
     {"name":"MiniTween","order":12,"path":"folders/MiniTween.yy",},
     {"name":"Objects","order":14,"path":"folders/Objects.yy",},
@@ -7,9 +7,9 @@
     {"name":"Scripts","order":13,"path":"folders/Scripts.yy",},
     {"name":"Sprites","order":15,"path":"folders/Sprites.yy",},
   ],
-  "ResourceOrderSettings": [
+  "ResourceOrderSettings":[
     {"name":"obj_mini_tweener","order":2,"path":"objects/obj_mini_tweener/obj_mini_tweener.yy",},
-    {"name":"PennersEasingAlgorithms","order":3,"path":"scripts/PennersEasingAlgorithms/PennersEasingAlgorithms.yy",},
     {"name":"MiniTween","order":1,"path":"scripts/MiniTween/MiniTween.yy",},
+    {"name":"PennersEasingAlgorithms","order":3,"path":"scripts/PennersEasingAlgorithms/PennersEasingAlgorithms.yy",},
   ],
 }
